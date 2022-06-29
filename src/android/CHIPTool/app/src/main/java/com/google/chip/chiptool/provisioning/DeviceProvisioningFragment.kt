@@ -24,6 +24,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -50,6 +51,7 @@ class DeviceProvisioningFragment : Fragment() {
     get() = arguments?.getParcelable(ARG_NETWORK_CREDENTIALS)
 
   private lateinit var scope: CoroutineScope
+  private lateinit var tvStatus: TextView
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -59,6 +61,7 @@ class DeviceProvisioningFragment : Fragment() {
     scope = viewLifecycleOwner.lifecycleScope
     deviceInfo = checkNotNull(requireArguments().getParcelable(ARG_DEVICE_INFO))
     return inflater.inflate(R.layout.single_fragment_container, container, false).apply {
+      tvStatus = findViewById(R.id.tvStatus)
       if (savedInstanceState == null) {
         if (deviceInfo.ipAddress != null) {
           pairDeviceWithAddress()
@@ -130,18 +133,26 @@ class DeviceProvisioningFragment : Fragment() {
       val context = requireContext()
       val msg = context.getString(msgResId, stringArgs)
       Log.i(TAG, "showMessage:$msg")
-      Toast.makeText(context, msg, Toast.LENGTH_SHORT)
-        .show()
+      tvStatus.text = msg
+    }
+  }
+
+  private fun showMessage(msg: String) {
+    requireActivity().runOnUiThread {
+      Log.i(TAG, "showMessage:$msg")
+      tvStatus.text = msg
     }
   }
 
   inner class ConnectionCallback : GenericChipDeviceListener() {
     override fun onConnectDeviceComplete() {
       Log.d(TAG, "onConnectDeviceComplete")
+      showMessage("onConnectDeviceComplete")
     }
 
     override fun onStatusUpdate(status: Int) {
       Log.d(TAG, "Pairing status update: $status")
+      showMessage("Pairing status update: $status")
     }
 
     override fun onCommissioningComplete(nodeId: Long, errorCode: Int) {
@@ -167,14 +178,17 @@ class DeviceProvisioningFragment : Fragment() {
 
     override fun onPairingDeleted(code: Int) {
       Log.d(TAG, "onPairingDeleted: $code")
+      showMessage("onPairingDeleted: $code")
     }
 
     override fun onCloseBleComplete() {
       Log.d(TAG, "onCloseBleComplete")
+      showMessage("onCloseBleComplete")
     }
 
     override fun onError(error: Throwable?) {
       Log.d(TAG, "onError: $error")
+      showMessage("onError: $error")
     }
   }
 

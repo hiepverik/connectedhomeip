@@ -1,5 +1,6 @@
 package com.google.chip.chiptool.clusterclient
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
@@ -23,8 +24,10 @@ import java.util.Calendar
 import java.util.Locale
 import kotlinx.android.synthetic.main.on_off_client_fragment.commandStatusTv
 import kotlinx.android.synthetic.main.on_off_client_fragment.levelBar
+import kotlinx.android.synthetic.main.on_off_client_fragment.loading
 import kotlinx.android.synthetic.main.on_off_client_fragment.reportStatusTv
 import kotlinx.android.synthetic.main.on_off_client_fragment.view.levelBar
+import kotlinx.android.synthetic.main.on_off_client_fragment.view.loading
 import kotlinx.android.synthetic.main.on_off_client_fragment.view.offBtn
 import kotlinx.android.synthetic.main.on_off_client_fragment.view.onBtn
 import kotlinx.android.synthetic.main.on_off_client_fragment.view.readBtn
@@ -59,6 +62,7 @@ class OnOffClientFragment : Fragment() {
       toggleBtn.setOnClickListener { scope.launch { sendToggleCommandClick() } }
       readBtn.setOnClickListener { scope.launch { sendReadOnOffClick() } }
       showSubscribeDialogBtn.setOnClickListener { showSubscribeDialog() }
+      loading.hide()
 
       levelBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
         override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
@@ -80,15 +84,29 @@ class OnOffClientFragment : Fragment() {
     }
   }
 
+  private fun showLoading() {
+    fromActivity()?.runOnUiThread {
+      loading.show()
+    }
+  }
+
+  private fun hideLoading() {
+    fromActivity()?.runOnUiThread {
+      loading.hide()
+    }
+  }
+
   private suspend fun sendReadOnOffClick() {
-    getOnOffClusterForDevice().readOnOffAttribute(object : ChipClusters.BooleanAttributeCallback {
+    getOnOffClusterForDevice()?.readOnOffAttribute(object : ChipClusters.BooleanAttributeCallback {
       override fun onSuccess(on: Boolean) {
         Log.v(TAG, "On/Off attribute value: $on")
         showMessage("On/Off attribute value: $on")
+        hideLoading()
       }
 
       override fun onError(ex: Exception) {
         Log.e(TAG, "Error reading onOff attribute", ex)
+        hideLoading()
       }
     })
   }
@@ -138,7 +156,7 @@ class OnOffClientFragment : Fragment() {
         Log.e(TAG, "Error configuring on/off attribute", ex)
       }
     }
-    onOffCluster.subscribeOnOffAttribute(subscribeCallback, minInterval, maxInterval)
+    onOffCluster?.subscribeOnOffAttribute(subscribeCallback, minInterval, maxInterval)
   }
 
   inner class ChipControllerCallback : GenericChipDeviceListener() {
@@ -163,6 +181,7 @@ class OnOffClientFragment : Fragment() {
   }
 
   private suspend fun sendLevelCommandClick() {
+    showLoading()
     val cluster = ChipClusters.LevelControlCluster(
       ChipClient.getConnectedDevicePointer(requireContext(), addressUpdateFragment.deviceId),
       LEVEL_CONTROL_CLUSTER_ENDPOINT
@@ -170,73 +189,93 @@ class OnOffClientFragment : Fragment() {
     cluster.moveToLevel(object : ChipClusters.DefaultClusterCallback {
       override fun onSuccess() {
         showMessage("MoveToLevel command success")
+        hideLoading()
       }
 
       override fun onError(ex: Exception) {
         showMessage("MoveToLevel command failure $ex")
         Log.e(TAG, "MoveToLevel command failure", ex)
+        hideLoading()
       }
 
     }, levelBar.progress, 0, 0, 0)
   }
 
   private suspend fun sendOnCommandClick() {
-    getOnOffClusterForDevice().on(object : ChipClusters.DefaultClusterCallback {
+    showLoading()
+    getOnOffClusterForDevice()?.on(object : ChipClusters.DefaultClusterCallback {
       override fun onSuccess() {
         showMessage("ON command success")
+        hideLoading()
       }
 
       override fun onError(ex: Exception) {
         showMessage("ON command failure $ex")
         Log.e(TAG, "ON command failure", ex)
+        hideLoading()
       }
 
     })
   }
 
   private suspend fun sendOffCommandClick() {
-    getOnOffClusterForDevice().off(object : ChipClusters.DefaultClusterCallback {
+    showLoading()
+    getOnOffClusterForDevice()?.off(object : ChipClusters.DefaultClusterCallback {
       override fun onSuccess() {
         showMessage("OFF command success")
+        hideLoading()
       }
 
       override fun onError(ex: Exception) {
         showMessage("OFF command failure $ex")
         Log.e(TAG, "OFF command failure", ex)
+        hideLoading()
       }
     })
   }
 
   private suspend fun sendToggleCommandClick() {
-    getOnOffClusterForDevice().toggle(object : ChipClusters.DefaultClusterCallback {
+    showLoading()
+    getOnOffClusterForDevice()?.toggle(object : ChipClusters.DefaultClusterCallback {
       override fun onSuccess() {
         showMessage("TOGGLE command success")
+        hideLoading()
       }
 
       override fun onError(ex: Exception) {
         showMessage("TOGGLE command failure $ex")
         Log.e(TAG, "TOGGLE command failure", ex)
+        hideLoading()
       }
     })
   }
 
-  private suspend fun getOnOffClusterForDevice(): OnOffCluster {
-    return OnOffCluster(
-      ChipClient.getConnectedDevicePointer(requireContext(), addressUpdateFragment.deviceId),
-      ON_OFF_CLUSTER_ENDPOINT
-    )
+  private suspend fun getOnOffClusterForDevice(): OnOffCluster? {
+    try {
+      val pointer = ChipClient.getConnectedDevicePointer(requireContext(), addressUpdateFragment.deviceId)
+      return OnOffCluster(pointer, ON_OFF_CLUSTER_ENDPOINT)
+    } catch (e: IllegalStateException) {
+      e.printStackTrace()
+      showMessage("Unable to get connected device ${addressUpdateFragment.deviceId}")
+      hideLoading()
+    }
+    return null
   }
 
   private fun showMessage(msg: String) {
-    requireActivity().runOnUiThread {
+    fromActivity()?.runOnUiThread {
       commandStatusTv.text = msg
     }
   }
 
   private fun showReportMessage(msg: String) {
-    requireActivity().runOnUiThread {
+    fromActivity()?.runOnUiThread {
       reportStatusTv.text = msg
     }
+  }
+
+  private fun fromActivity(): Activity? {
+    return activity
   }
 
   companion object {

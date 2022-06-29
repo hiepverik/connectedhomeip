@@ -329,13 +329,20 @@ void AndroidDeviceControllerWrapper::OnCommissioningComplete(NodeId deviceId, CH
 
     if (ssidStr != nullptr)
     {
+
+        ChipLogProgress(chipTool, "Oncomplete: ssidStrs");
+        ChipLogProgress(chipTool, "Oncomplete: ssidStr %s ", ssid);
         env->ReleaseStringUTFChars(ssidStr, ssid);
         env->DeleteGlobalRef(ssidStr);
+        ssidStr = nullptr;
     }
     if (passwordStr != nullptr)
     {
+        ChipLogProgress(chipTool, "Oncomplete: passwordStr");
+        ChipLogProgress(chipTool, "Oncomplete: passwordStr %s ", password);
         env->ReleaseStringUTFChars(passwordStr, password);
         env->DeleteGlobalRef(passwordStr);
+        passwordStr = nullptr;
     }
     if (operationalDatasetBytes != nullptr)
     {

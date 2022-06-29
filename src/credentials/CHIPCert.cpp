@@ -45,6 +45,7 @@
 #include <lib/support/ScopedBuffer.h>
 #include <lib/support/TimeUtils.h>
 #include <protocols/Protocols.h>
+#include <lib/support/logging/CHIPLogging.h>
 #if CHIP_CRYPTO_HSM
 #include <crypto/hsm/CHIPCryptoPALHsm.h>
 #endif
@@ -388,6 +389,7 @@ CHIP_ERROR ChipCertificateSet::ValidateCert(const ChipCertificateData * cert, Va
     CertificateValidityResult validityResult;
     if (context.mEffectiveTime.Is<CurrentChipEpochTime>())
     {
+        ChipLogError(Test, "[CurrentChipEpochTime] %d, [CertEpochTime] %d", context.mEffectiveTime.Get<CurrentChipEpochTime>().count(), cert->mNotBeforeTime);
         if (context.mEffectiveTime.Get<CurrentChipEpochTime>().count() < cert->mNotBeforeTime)
         {
             validityResult = CertificateValidityResult::kNotYetValid;
@@ -403,6 +405,7 @@ CHIP_ERROR ChipCertificateSet::ValidateCert(const ChipCertificateData * cert, Va
     }
     else if (context.mEffectiveTime.Is<LastKnownGoodChipEpochTime>())
     {
+        ChipLogError(Test, "[LastKnownGoodChipEpochTime] %d, [CertEpochTime] %d", context.mEffectiveTime.Get<LastKnownGoodChipEpochTime>().count(), cert->mNotBeforeTime);
         // Last Known Good Time may not be moved forward except at the time of
         // commissioning or firmware update, so we can't use it to validate
         // NotBefore.  However, so long as firmware build times are properly
