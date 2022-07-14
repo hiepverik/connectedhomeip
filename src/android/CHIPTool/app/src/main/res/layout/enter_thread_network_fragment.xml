@@ -32,8 +32,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/channelTv"
             android:layout_marginHorizontal="16dp"
-            android:text="@string/enter_thread_channel_text"
             android:inputType="number"
+            android:text="@string/enter_thread_channel_text"
             android:textSize="20sp" />
 
         <TextView

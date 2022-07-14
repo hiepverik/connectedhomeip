@@ -74,6 +74,8 @@ class DeviceProvisioningFragment : Fragment() {
 
   override fun onStop() {
     super.onStop()
+    val deviceController = ChipClient.getDeviceController(requireContext())
+    deviceController.close()
     gatt = null
   }
 

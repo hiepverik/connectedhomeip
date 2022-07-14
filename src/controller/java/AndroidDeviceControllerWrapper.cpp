@@ -346,8 +346,10 @@ void AndroidDeviceControllerWrapper::OnCommissioningComplete(NodeId deviceId, CH
     }
     if (operationalDatasetBytes != nullptr)
     {
+        ChipLogProgress(chipTool, "Oncomplete: operationalDatasetBytes");
         env->ReleaseByteArrayElements(operationalDatasetBytes, operationalDataset, 0);
         env->DeleteGlobalRef(operationalDatasetBytes);
+        operationalDatasetBytes = nullptr;
     }
 }
 
