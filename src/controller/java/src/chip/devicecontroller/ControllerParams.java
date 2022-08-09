@@ -100,7 +100,7 @@ public final class ControllerParams {
   /** Builder for {@link ControllerParams}. */
   public static class Builder {
     private int udpListenPort = LEGACY_GLOBAL_CHIP_PORT + 1;
-    private int controllerVendorId = 0xFFFF;
+    private int controllerVendorId = 0xFFF4;
     private int failsafeTimerSeconds = 30;
     private boolean attemptNetworkScanWiFi = false;
     private boolean attemptNetworkScanThread = false;
