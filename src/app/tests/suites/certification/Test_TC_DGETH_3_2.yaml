@@ -13,7 +13,10 @@
 # limitations under the License.
 # Auto-generated scripts for harness use only, please review before automation. The endpoints and cluster names are currently set to default
 
-name: 3.3.2. [TC-DGETH-3.2] Command generated functionality with client as DUT
+name: 3.3.2. [TC-DGETH-3.2] Command Generated {DUT_Client}]
+
+PICS:
+    - DGETH.C
 
 config:
     nodeId: 0x12344321
@@ -21,16 +24,20 @@ config:
     endpoint: 0
 
 tests:
-    - label: "Commission DUT to TH"
+    - label: "Commission TH to DUT"
       verification: |
-
+          verification step to be updated.
       disabled: true
 
-    - label: "TH sends ResetCounts to DUT"
+    - label: "DUT sends ResetCounts to TH."
+      PICS: DGETH.C.C00.Tx
       verification: |
           Verify Command data recieved from running the below command is a success
 
           ./chip-tool ethernetnetworkdiagnostics reset-counts 1 1
+
+          Verify Command data recieved from running the below command is a success in DUT as Client side Log
+
           CHIP:DMG: InvokeResponseMessage =
           [1649664146.639743][8173:8178] CHIP:DMG: {
           [1649664146.639789][8173:8178] CHIP:DMG:         suppressResponse = false,

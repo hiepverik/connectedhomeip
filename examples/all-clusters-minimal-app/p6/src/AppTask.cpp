@@ -43,6 +43,31 @@
 #include <app/clusters/network-commissioning/network-commissioning.h>
 #include <platform/P6/NetworkCommissioningDriver.h>
 
+/* OTA related includes */
+#if CHIP_DEVICE_CONFIG_ENABLE_OTA_REQUESTOR
+#include <app/clusters/ota-requestor/BDXDownloader.h>
+#include <app/clusters/ota-requestor/DefaultOTARequestor.h>
+#include <app/clusters/ota-requestor/DefaultOTARequestorDriver.h>
+#include <app/clusters/ota-requestor/DefaultOTARequestorStorage.h>
+#include <platform/P6/OTAImageProcessorImpl.h>
+
+using chip::BDXDownloader;
+using chip::CharSpan;
+using chip::DefaultOTARequestor;
+using chip::FabricIndex;
+using chip::GetRequestorInstance;
+using chip::NodeId;
+using chip::OTADownloader;
+using chip::DeviceLayer::OTAImageProcessorImpl;
+using chip::System::Layer;
+
+using namespace ::chip;
+using namespace chip::TLV;
+using namespace ::chip::Credentials;
+using namespace ::chip::DeviceLayer;
+using namespace ::chip::System;
+
+#endif
 #define APP_EVENT_QUEUE_SIZE 10
 #define APP_TASK_STACK_SIZE (4096)
 #define APP_WAIT_LOOP 1000
@@ -61,6 +86,15 @@ StaticQueue_t sAppEventQueueStruct;
 
 StackType_t appStack[APP_TASK_STACK_SIZE / sizeof(StackType_t)];
 StaticTask_t appTaskStruct;
+
+#if CHIP_DEVICE_CONFIG_ENABLE_OTA_REQUESTOR
+DefaultOTARequestor gRequestorCore;
+DefaultOTARequestorStorage gRequestorStorage;
+DefaultOTARequestorDriver gRequestorUser;
+BDXDownloader gDownloader;
+OTAImageProcessorImpl gImageProcessor;
+#endif
+
 } // namespace
 
 using namespace ::chip;
@@ -96,6 +130,9 @@ static void InitServer(intptr_t context)
 
     // Initialize device attestation config
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
+#if CHIP_DEVICE_CONFIG_ENABLE_OTA_REQUESTOR
+    GetAppTask().InitOTARequestor();
+#endif
 }
 
 CHIP_ERROR AppTask::StartAppTask()
@@ -114,7 +151,14 @@ CHIP_ERROR AppTask::StartAppTask()
 CHIP_ERROR AppTask::Init()
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-
+#if CHIP_DEVICE_CONFIG_ENABLE_OTA_REQUESTOR
+    int rc = boot_set_confirmed();
+    if (rc != 0)
+    {
+        P6_LOG("boot_set_confirmed failed");
+        appError(CHIP_ERROR_WELL_UNINITIALIZED);
+    }
+#endif
     // Register the callback to init the MDNS server when connectivity is available
     PlatformMgr().AddEventHandler(
         [](const ChipDeviceEvent * event, intptr_t arg) {
@@ -264,3 +308,20 @@ bool lowPowerClusterSleep()
 {
     return true;
 }
+
+#if CHIP_DEVICE_CONFIG_ENABLE_OTA_REQUESTOR
+void AppTask::InitOTARequestor()
+{
+    SetRequestorInstance(&gRequestorCore);
+    ConfigurationMgr().StoreSoftwareVersion(CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION);
+    gRequestorStorage.Init(chip::Server::GetInstance().GetPersistentStorage());
+    gRequestorCore.Init(chip::Server::GetInstance(), gRequestorStorage, gRequestorUser, gDownloader);
+    gImageProcessor.SetOTADownloader(&gDownloader);
+    gDownloader.SetImageProcessorDelegate(&gImageProcessor);
+
+    gRequestorUser.Init(&gRequestorCore, &gImageProcessor);
+
+    P6_LOG("Current Software Version: %u", CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION);
+    P6_LOG("Current Software Version String: %s", CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION_STRING);
+}
+#endif

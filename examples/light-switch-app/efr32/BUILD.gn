@@ -62,7 +62,10 @@ declare_args() {
   disable_lcd = false
 
   # Argument to Disable IPv4 for wifi(rs911)
-  chip_disable_wifi_ipv4 = false
+  chip_enable_wifi_ipv4 = false
+
+  # Argument to force enable WPA3 security
+  wifi_enable_security_wpa3 = false
 }
 
 declare_args() {
@@ -89,7 +92,7 @@ if (efr32_board == "BRD4166A" || efr32_board == "BRD4180A") {
 
 # WiFi settings
 if (chip_enable_wifi) {
-  wifi_sdk_dir = "${chip_root}/third_party/efr32_sdk/repo/matter/wifi"
+  wifi_sdk_dir = "${chip_root}/third_party/silabs/matter_support/matter/wifi"
   efr32_lwip_defs = [ "LWIP_NETIF_API=1" ]
   efr32_lwip_defs += [
     "LWIP_IPV4=1",
@@ -102,7 +105,7 @@ if (chip_enable_wifi) {
 
   if (use_rs911x) {
     wiseconnect_sdk_root =
-        "${chip_root}/third_party/efr32_sdk/wiseconnect-wifi-bt-sdk"
+        "${chip_root}/third_party/silabs/wiseconnect-wifi-bt-sdk"
     import("${wifi_sdk_dir}/rs911x/rs911x.gni")
   } else {
     import("${wifi_sdk_dir}/wf200/wf200.gni")
@@ -169,13 +172,13 @@ efr32_executable("light_switch_app") {
   defines = []
 
   sources = [
+    "${examples_plat_dir}/BaseApplication.cpp",
     "${examples_plat_dir}/LEDWidget.cpp",
     "${examples_plat_dir}/efr32_utils.cpp",
     "${examples_plat_dir}/heap_4_silabs.c",
     "${examples_plat_dir}/init_efrPlatform.cpp",
     "${examples_plat_dir}/matter_config.cpp",
     "src/AppTask.cpp",
-    "src/LightingManager.cpp",
     "src/ZclCallbacks.cpp",
     "src/binding-handler.cpp",
     "src/main.cpp",
@@ -213,13 +216,14 @@ efr32_executable("light_switch_app") {
     }
   }
 
+  # Attestation Credentials
+  if (chip_build_platform_attestation_credentials_provider) {
+    deps += [ "${examples_plat_dir}:efr32-attestation-credentials" ]
+  }
+
   if (chip_enable_ota_requestor) {
     defines += [ "EFR32_OTA_ENABLED" ]
     sources += [ "${examples_plat_dir}/OTAConfig.cpp" ]
-  }
-
-  if (chip_disable_wifi_ipv4) {
-    defines += [ "WIFI_IPV4_DISABLED" ]
   }
 
   # WiFi Settings
@@ -248,6 +252,14 @@ efr32_executable("light_switch_app") {
     } else if (use_wf200) {
       sources += wf200_plat_src
       include_dirs += wf200_plat_incs
+    }
+
+    if (chip_enable_wifi_ipv4) {
+      defines += [ "CHIP_DEVICE_CONFIG_ENABLE_IPV4" ]
+    }
+
+    if (wifi_enable_security_wpa3) {
+      defines += [ "WIFI_ENABLE_SECURITY_WPA3=1" ]
     }
   }
 

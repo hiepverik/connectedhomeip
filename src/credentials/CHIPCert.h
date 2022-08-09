@@ -498,6 +498,15 @@ CHIP_ERROR ConvertX509CertToChipCert(const ByteSpan x509Cert, MutableByteSpan & 
  **/
 CHIP_ERROR ConvertChipCertToX509Cert(const ByteSpan chipCert, MutableByteSpan & x509Cert);
 
+/**
+ * Validate CHIP Root CA Certificate (RCAC) in ByteSpan TLV-encoded form.
+ * This function performs RCAC parsing, checks SubjectDN validity, verifies that SubjectDN
+ * and IssuerDN are equal, verifies that SKID and AKID are equal, validates certificate signature.
+ *
+ * @return Returns a CHIP_ERROR on error, CHIP_NO_ERROR otherwise
+ */
+CHIP_ERROR ValidateChipRCAC(const ByteSpan & rcac);
+
 struct X509CertRequestParams
 {
     int64_t SerialNumber;
@@ -708,7 +717,7 @@ CHIP_ERROR ExtractCATsFromOpCert(const ByteSpan & opcert, CATValues & cats);
 CHIP_ERROR ExtractCATsFromOpCert(const ChipCertificateData & opcert, CATValues & cats);
 
 /**
- * Extract the and Fabric ID from an operational certificate in ByteSpan TLV-encoded
+ * Extract Fabric ID from an operational certificate in ByteSpan TLV-encoded
  * form.  This does not perform any sort of validation on the certificate
  * structure other than parsing it.
  *
@@ -740,12 +749,6 @@ CHIP_ERROR ExtractPublicKeyFromChipCert(const ByteSpan & chipCert, P256PublicKey
  * Extract Not Before Time from a chip certificate in ByteSpan TLV-encoded form.
  * Output format is seconds referenced from the CHIP epoch.
  *
- * Special value 0 corresponds to the X.509/RFC5280 defined special time value
- * 99991231235959Z meaning 'no well-defined expiration date'.  However, as a
- * NotBefore time, this does not require special handling when comparing to
- * a CHIP epoch time source, as 0 (the epoch) is also the earliest representable
- * uint32 time.
-
  * This does not perform any sort of validation on the certificate structure
  * other than parsing it.
  *

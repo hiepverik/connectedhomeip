@@ -13,7 +13,7 @@
 # limitations under the License.
 # Auto-generated scripts for harness use only, please review before automation. The endpoints and cluster names are currently set to default
 
-name: 3.2.2. [TC-DGWIFI-3.2] Commands with client as DUT
+name: 3.2.2. [TC-DGWIFI-3.2]Command Generated [DUT as Client]
 
 config:
     nodeId: 0x12344321
@@ -21,16 +21,19 @@ config:
     endpoint: 0
 
 tests:
-    - label: "Commission DUT to TH"
+    - label: "Commission TH to DUT"
       verification: |
-
+          verification step to be updated.
       disabled: true
 
     - label: "DUT sends ResetCounts command to TH"
+      PICS: DGWIFI.S.C00.Rsp
       verification: |
-          Verify Command data recieved from running the below command is a success
+          ./chip-tool wifinetworkdiagnostics reset-counts 1 0
 
-          ./chip-tool wifinetworkdiagnostics reset-counts 1 1
+
+          verify On TH(Reference app) receives the right Read Request Message for the data sent in the above command
+
           CHIP:DMG: InvokeResponseMessage =
           [1649664146.639743][8173:8178] CHIP:DMG: {
           [1649664146.639789][8173:8178] CHIP:DMG:         suppressResponse = false,

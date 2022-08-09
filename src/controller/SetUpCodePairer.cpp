@@ -78,7 +78,7 @@ CHIP_ERROR SetUpCodePairer::Connect(SetupPayload & payload)
         {
             isRunning = true;
         }
-        VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err, err);
+        VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err || CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE == err, err);
     }
 
     if (searchOverAll || payload.rendezvousInformation == RendezvousInformationFlag::kSoftAP)
@@ -87,7 +87,7 @@ CHIP_ERROR SetUpCodePairer::Connect(SetupPayload & payload)
         {
             isRunning = true;
         }
-        VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err, err);
+        VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err || CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE == err, err);
     }
 
     // We always want to search on network because any node that has already been commissioned will use on-network regardless of the
@@ -154,10 +154,17 @@ CHIP_ERROR SetUpCodePairer::StartDiscoverOverIP(SetupPayload & payload)
 {
     ChipLogProgress(Controller, "Starting commissioning discovery over DNS-SD");
 
-    currentFilter.type = payload.isShortDiscriminator ? Dnssd::DiscoveryFilterType::kShortDiscriminator
-                                                      : Dnssd::DiscoveryFilterType::kLongDiscriminator;
-    currentFilter.code =
-        payload.isShortDiscriminator ? static_cast<uint16_t>((payload.discriminator >> 8) & 0x0F) : payload.discriminator;
+    auto & discriminator = payload.discriminator;
+    if (discriminator.IsShortDiscriminator())
+    {
+        currentFilter.type = Dnssd::DiscoveryFilterType::kShortDiscriminator;
+        currentFilter.code = discriminator.GetShortValue();
+    }
+    else
+    {
+        currentFilter.type = Dnssd::DiscoveryFilterType::kLongDiscriminator;
+        currentFilter.code = discriminator.GetLongValue();
+    }
     // Handle possibly-sync callbacks.
     mWaitingForDiscovery[kIPTransport] = true;
     CHIP_ERROR err                     = mCommissioner->DiscoverCommissionableNodes(currentFilter);
@@ -308,6 +315,11 @@ void SetUpCodePairer::NotifyCommissionableDeviceDiscovered(const Dnssd::Discover
     ConnectToDiscoveredDevice();
 }
 
+void SetUpCodePairer::CommissionerShuttingDown()
+{
+    ResetDiscoveryState();
+}
+
 bool SetUpCodePairer::TryNextRendezvousParameters()
 {
     if (ConnectToDiscoveredDevice())
@@ -424,7 +436,10 @@ void SetUpCodePairer::OnPairingComplete(CHIP_ERROR error)
         mSystemLayer->CancelTimer(OnDeviceDiscoveredTimeoutCallback, this);
 
         ResetDiscoveryState();
-        pairingDelegate->OnPairingComplete(error);
+        if (pairingDelegate != nullptr)
+        {
+            pairingDelegate->OnPairingComplete(error);
+        }
         return;
     }
 
@@ -437,7 +452,10 @@ void SetUpCodePairer::OnPairingComplete(CHIP_ERROR error)
         return;
     }
 
-    pairingDelegate->OnPairingComplete(error);
+    if (pairingDelegate != nullptr)
+    {
+        pairingDelegate->OnPairingComplete(error);
+    }
 }
 
 void SetUpCodePairer::OnPairingDeleted(CHIP_ERROR error)
