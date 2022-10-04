@@ -19,9 +19,11 @@ AccessControlEntry
 accessor
 AccountLogin
 acdbc
+ack
 ACKed
 ACL
 ACLs
+actdiag
 AdapterAddress
 AdapterName
 adb
@@ -42,12 +44,14 @@ AdvSendAdvert
 AE
 aef
 AES
+AlarmCode
 algs
 alloc
-AlarmCode
 Ameba
 amebad
 amebaiot
+AmebaZ
+amebaz2
 announcementReason
 AnnounceOTAProvider
 AnnounceOtaProviderRequest
@@ -78,6 +82,7 @@ argc
 args
 argv
 armeabi
+armino
 ARMmbed
 armv
 ASAN
@@ -126,6 +131,7 @@ BDX
 BDXDownloader
 BeagleBone
 befc
+BEKEN
 betaprogram
 BinaryInputBasic
 Binfmt
@@ -139,6 +145,7 @@ BLEManagerImpl
 BlePlatformDelegate
 Blinls
 bloaty
+blockdiag
 blocklist
 blockquote
 bluetoothd
@@ -151,7 +158,6 @@ bouffalolab
 BRD
 breakpoint
 bredr
-BridgedActions
 BridgedDeviceBasic
 bridgedLightEndpoint
 bringup
@@ -227,6 +233,7 @@ ChlorineConcentrationMeasurement
 ChlorodibromomethaneConcentrationMeasurement
 ChloroformConcentrationMeasurement
 chmod
+chown
 chrpath
 CIPD
 CircleCI
@@ -247,6 +254,7 @@ ClusterTestGeneration
 cmake
 CMakeLists
 CMD
+CMS
 CMSIS
 CMVH
 cn
@@ -284,8 +292,8 @@ connstring
 conntype
 const
 ContentApp
-ContentApp's
 ContentAppPlatform
+ContentApp's
 ContentLaunch
 ContentLauncher
 continuousHinting
@@ -322,6 +330,7 @@ cxx
 CY
 CYW
 DAC
+DACs
 dadbdcdddedf
 DAP
 DAPLINK
@@ -378,6 +387,7 @@ DeviceCommissioner
 DeviceCommon
 DeviceController
 DeviceId
+DeviceInstanceInfoProvider
 DeviceLayer
 DeviceNetworkProvisioningDelegate
 DeviceNetworkProvisioningDelegateImpl
@@ -438,6 +448,7 @@ dryrun
 DS
 duplicative
 DUT
+DUTS
 DV
 DVK
 dynload
@@ -492,6 +503,7 @@ EthyleneOxideConcentrationMeasurement
 EvalCode
 EvalCodeWithName
 EvalFrameDefault
+EVB
 evk
 exceptfds
 ExchangeContext
@@ -584,6 +596,7 @@ GPL
 GPLv
 Gradle
 gradlew
+Groupcast
 GroupId
 GroupKeyManagement
 groupKeySecurityPolicy
@@ -818,6 +831,7 @@ mdash
 MDNS
 MediaInput
 MediaPlayback
+MediaTek
 mem
 memdf
 MemMonitoring
@@ -865,6 +879,7 @@ multilib
 Multiprotocol
 multithreaded
 mutexes
+mv
 MX
 mydir
 MyPASSWORD
@@ -911,6 +926,7 @@ nullptr
 NUM
 NVM
 NVS
+nwdiag
 nwk
 NXP
 objcopy
@@ -973,6 +989,7 @@ PAAs
 PacketBuffer
 PAI
 PairDevice
+PAIs
 PAKE
 palletsprojects
 pankore
@@ -1102,8 +1119,8 @@ REPL
 repo
 req
 Requestor
-Requestor's
 RequestorCanConsent
+Requestor's
 Requestors
 responder
 RestrictedEvent
@@ -1127,6 +1144,7 @@ rsn
 RSSI
 RST
 rsync
+rtd
 RTL
 rtld
 RTOS
@@ -1149,8 +1167,8 @@ SDB
 SDC
 SDHC
 SDK
-SDK's
 sdkconfig
+SDK's
 SDKs
 SDKTARGETSYSROOT
 sdl
@@ -1160,6 +1178,7 @@ semver
 SendButton
 SendNewInputEvent
 sendto
+seqdiag
 SERIALDEVICE
 SerialNumber
 ServiceId
@@ -1174,6 +1193,7 @@ SetRequestorInstance
 SetUpPINCode
 SetupQRCode
 sexualized
+sfv
 SHA
 ShadeConfiguration
 showDocumentation
@@ -1204,6 +1224,7 @@ SoftwareVersion
 softwareVersionStr
 SoftwareVersionString
 softwareVersionValid
+sphinxcontrib
 SPI
 spiflash
 spinel
@@ -1236,6 +1257,7 @@ submodules
 subprocess
 SubscribeResponse
 SubscriptionId
+substeps
 subtype
 sudo
 SulfateConcentrationMeasurement
@@ -1323,6 +1345,7 @@ trackFree
 TransferSession
 transitionTime
 TransportMgrBase
+TriggerEffect
 TRNG
 TrustedRootCertificates
 tsan
@@ -1353,12 +1376,14 @@ uint
 ULA
 UNBLUR
 uncommissioned
+Unencrypted
 unfocus
 Unicast
 UniFlash
 UnitLocalization
 unpair
 unprovisioned
+Unsecure
 untrusted
 updateAvailable
 updateNotAvailable
@@ -1394,6 +1419,7 @@ ver
 Verifier
 Verifiers
 VID
+vids
 virtualenv
 visualstudio
 vlatest
@@ -1462,6 +1488,7 @@ xFFFF
 xfffff
 xFFFFFFEFFFFFFFFF
 xtensa
+xvzf
 xwayland
 xyz
 xz
@@ -1482,6 +1509,7 @@ zclsubscribe
 zclwrite
 ZephyrConfig
 zephyrproject
+zhengyaohan
 Zigbee
 zigbeealliance
 zigbeethread

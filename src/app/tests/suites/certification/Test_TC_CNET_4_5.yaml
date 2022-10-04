@@ -26,6 +26,29 @@ config:
     endpoint: 0
 
 tests:
+    - label: "Commission TH and DUT over BLE to setup the Wi-Fi"
+      verification: |
+
+      disabled: true
+
+    - label:
+          "The cluster Identifier 49 (0x0031) is present in the ServerList
+          attribute"
+      verification: |
+
+      disabled: true
+
+    - label: "The FeatureMap attribute value is 1"
+      verification: |
+          "./chip-tool networkcommissioning read feature-map 1 0
+
+          Verify the "feature-map" on the TH(Chip-tool) Log:
+
+          [1653474932.055513][29920:29925] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0031 Attribute 0x0000_FFFC DataVersion: 1600858167
+          [1653474932.055578][29920:29925] CHIP:TOO:   FeatureMap: 1
+          [1653474932.055675][29920:29925] CHIP:EM: Sending Standalone Ack for MessageCounter:1494059 on exchange 5482i"
+      disabled: true
+
     - label:
           "TH sends the AddOrUpdateWiFiNetwork command to the DUT with the
           following argument: SSID argument value as Userwifi_ssid Credentials
@@ -38,7 +61,7 @@ tests:
 
           ./chip-tool networkcommissioning add-or-update-wi-fi-network hex:47524C50726976617465 grlprivatewifi092010 1 0
 
-          Verify  "FAILSAFE_REQUIRED status code"  on the TH(chip-tool) Log:
+          Verify  "FAILSAFE_REQUIRED status code"  on the TH(Chip-tool) Log:
 
           [1657619600.364023][2056:2061] CHIP:DMG: Received Command Response Status for Endpoint=0 Cluster=0x0000_0031 Command=0x0000_0003 Status=0xca
           [1657619600.364102][2056:2061] CHIP:TOO: Error: IM Error 0x000005CA: General error: 0xca (FAILSAFE_REQUIRED)
@@ -56,7 +79,7 @@ tests:
 
           ./chip-tool networkcommissioning remove-network hex:47524C50726976617465 1 0
 
-          Verify  "FAILSAFE_REQUIRED status code"  on the TH(chip-tool) Log:
+          Verify  "FAILSAFE_REQUIRED status code"  on the TH(Chip-tool) Log:
 
           [1657619600.364023][2056:2061] CHIP:DMG: Received Command Response Status for Endpoint=0 Cluster=0x0000_0031 Command=0x0000_0003 Status=0xca
           [1657619600.364102][2056:2061] CHIP:TOO: Error: IM Error 0x000005CA: General error: 0xca (FAILSAFE_REQUIRED)
@@ -74,7 +97,7 @@ tests:
 
           ./chip-tool networkcommissioning connect-network hex:47524C50726976617465 1 0
 
-          Verify  "FAILSAFE_REQUIRED status code"  on the TH(chip-tool) Log:
+          Verify  "FAILSAFE_REQUIRED status code"  on the TH(Chip-tool) Log:
 
           [1657619600.364023][2056:2061] CHIP:DMG: Received Command Response Status for Endpoint=0 Cluster=0x0000_0031 Command=0x0000_0003 Status=0xca
           [1657619600.364102][2056:2061] CHIP:TOO: Error: IM Error 0x000005CA: General error: 0xca (FAILSAFE_REQUIRED)

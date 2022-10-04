@@ -36,12 +36,14 @@ constexpr uint32_t kDeviceDiscoveredTimeout = CHIP_CONFIG_SETUP_CODE_PAIRER_DISC
 namespace chip {
 namespace Controller {
 
-CHIP_ERROR SetUpCodePairer::PairDevice(NodeId remoteId, const char * setUpCode, SetupCodePairerBehaviour commission)
+CHIP_ERROR SetUpCodePairer::PairDevice(NodeId remoteId, const char * setUpCode, SetupCodePairerBehaviour commission,
+                                       DiscoveryType discoveryType)
 {
     VerifyOrReturnError(mSystemLayer != nullptr, CHIP_ERROR_INCORRECT_STATE);
 
     SetupPayload payload;
     mConnectionType = commission;
+    mDiscoveryType  = discoveryType;
 
     bool isQRCode = strncmp(setUpCode, kQRCodePrefix, strlen(kQRCodePrefix)) == 0;
     if (isQRCode)
@@ -71,23 +73,27 @@ CHIP_ERROR SetUpCodePairer::Connect(SetupPayload & payload)
     CHIP_ERROR err = CHIP_NO_ERROR;
     bool isRunning = false;
 
-    bool searchOverAll = payload.rendezvousInformation == RendezvousInformationFlag::kNone;
-    if (searchOverAll || payload.rendezvousInformation == RendezvousInformationFlag::kBLE)
-    {
-        if (CHIP_NO_ERROR == (err = StartDiscoverOverBle(payload)))
-        {
-            isRunning = true;
-        }
-        VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err || CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE == err, err);
-    }
+    bool searchOverAll = !payload.rendezvousInformation.HasValue();
 
-    if (searchOverAll || payload.rendezvousInformation == RendezvousInformationFlag::kSoftAP)
+    if (mDiscoveryType == DiscoveryType::kAll)
     {
-        if (CHIP_NO_ERROR == (err = StartDiscoverOverSoftAP(payload)))
+        if (searchOverAll || payload.rendezvousInformation.Value().Has(RendezvousInformationFlag::kBLE))
         {
-            isRunning = true;
+            if (CHIP_NO_ERROR == (err = StartDiscoverOverBle(payload)))
+            {
+                isRunning = true;
+            }
+            VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err || CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE == err, err);
         }
-        VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err || CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE == err, err);
+
+        if (searchOverAll || payload.rendezvousInformation.Value().Has(RendezvousInformationFlag::kSoftAP))
+        {
+            if (CHIP_NO_ERROR == (err = StartDiscoverOverSoftAP(payload)))
+            {
+                isRunning = true;
+            }
+            VerifyOrReturnError(searchOverAll || CHIP_NO_ERROR == err || CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE == err, err);
+        }
     }
 
     // We always want to search on network because any node that has already been commissioned will use on-network regardless of the
@@ -405,14 +411,14 @@ void SetUpCodePairer::OnStatusUpdate(DevicePairingDelegate::Status status)
         if (!mDiscoveredParameters.empty())
         {
             ChipLogProgress(Controller, "Ignoring SecurePairingFailed status for now; we have more discovered devices to try");
-            return;
+            status = DevicePairingDelegate::Status::SecurePairingDiscoveringMoreDevices;
         }
 
         if (DiscoveryInProgress())
         {
             ChipLogProgress(Controller,
                             "Ignoring SecurePairingFailed status for now; we are waiting to see if we discover more devices");
-            return;
+            status = DevicePairingDelegate::Status::SecurePairingDiscoveringMoreDevices;
         }
     }
 

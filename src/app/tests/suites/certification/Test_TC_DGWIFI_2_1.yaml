@@ -14,6 +14,10 @@
 
 name: 51.2.1. [TC-DGWIFI-2.1] Attributes with server as DUT
 
+PICS:
+    - DGWIFI.S.A
+    - DGWIFI.S
+
 config:
     nodeId: 0x12344321
     cluster: "WiFi Network Diagnostics"
@@ -31,7 +35,7 @@ tests:
     - label: "TH reads BSSID attribute from DUT"
       PICS: DGWIFI.S.A0000
       command: "readAttribute"
-      attribute: "BSSID"
+      attribute: "bssid"
       response:
           constraints:
               type: octet_string
@@ -68,7 +72,7 @@ tests:
     - label: "Reads RSSI attribute constraints"
       PICS: DGWIFI.S.A0004
       command: "readAttribute"
-      attribute: "RSSI"
+      attribute: "rssi"
       response:
           constraints:
               type: int8s

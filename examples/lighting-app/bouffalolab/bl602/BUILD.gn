@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build_overrides/bl602_sdk.gni")
+import("//build_overrides/bouffalolab_iot_sdk.gni")
 import("//build_overrides/build.gni")
 import("//build_overrides/chip.gni")
 
@@ -40,6 +40,9 @@ declare_args() {
 
   # Monitor & log memory usage at runtime.
   enable_heap_monitoring = false
+
+  # OTA periodic query timeout in seconds
+  ota_periodic_query_timeout = 86400
 }
 
 show_qr_code = false
@@ -64,6 +67,7 @@ bl602_sdk("sdk") {
   defines = [
     "CONFIG_PSM_EASYFLASH_SIZE=16384",
     "CHIP_DEVICE_CONFIG_USE_TEST_SETUP_PIN_CODE=${setupPinCode}",
+    "OTA_PERIODIC_QUERY_TIMEOUT=${ota_periodic_query_timeout}",
   ]
 
   if (chip_enable_pw_rpc) {
@@ -77,6 +81,8 @@ bl602_executable("lighting_app") {
   sources = [
     #"${bl602_project_dir}/include/CHIPProjectConfig.h",
     "${examples_plat_dir}/InitPlatform.cpp",
+    "${examples_plat_dir}/route_hook/bl_route_hook.c",
+    "${examples_plat_dir}/route_hook/bl_route_table.c",
     "include/CHIPProjectConfig.h",
     "src/AppTask.cpp",
     "src/CHIPDeviceManager.cpp",
@@ -158,6 +164,7 @@ bl602_executable("lighting_app") {
     include_dirs += [
       "${chip_root}/examples/common",
       "${chip_root}/examples/common/pigweed/bouffalolab/bl602",
+      "${examples_plat_dir}/route_hook",
     ]
   }
 

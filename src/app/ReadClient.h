@@ -200,8 +200,9 @@ public:
          * This function is invoked when using SendAutoResubscribeRequest, where the ReadClient was configured to auto re-subscribe
          * and the ReadPrepareParams was moved into this client for management. This will have to be free'ed appropriately by the
          * application. If SendAutoResubscribeRequest fails, this function will be called before it returns the failure. If
-         * SendAutoResubscribeRequest succeeds, this function will be called immediately before calling OnDone. If
-         * SendAutoResubscribeRequest is not called, this function will not be called.
+         * SendAutoResubscribeRequest succeeds, this function will be called immediately before calling OnDone, or
+         * when the ReadClient is destroyed, if that happens before OnDone. If  SendAutoResubscribeRequest is not called,
+         * this function will not be called.
          */
         virtual void OnDeallocatePaths(ReadPrepareParams && aReadPrepareParams) {}
 
@@ -271,14 +272,6 @@ public:
      * OnDone() will not be called.
      */
     ~ReadClient() override;
-
-    /*
-     * This forcibly closes the exchange context if a valid one is pointed to. Such a situation does
-     * not arise during normal message processing flows that all normally call Close() above. This can only
-     * arise due to application-initiated destruction of the object when this object is handling receiving/sending
-     * message payloads. Abort() should be called first before the object is destroyed.
-     */
-    void Abort();
 
     /**
      *  Send a request.  There can be one request outstanding on a given ReadClient.
@@ -411,7 +404,7 @@ private:
         SubscriptionActive,        ///< The client is maintaining subscription
     };
 
-    bool IsMatchingClient(SubscriptionId aSubscriptionId)
+    bool IsMatchingSubscriptionId(SubscriptionId aSubscriptionId)
     {
         return aSubscriptionId == mSubscriptionId && mInteractionType == InteractionType::Subscribe;
     }
@@ -481,7 +474,6 @@ private:
      * If aError != CHIP_NO_ERROR, this will trigger re-subscriptions if allowResubscription is true
      * AND if this ReadClient instance is tracking a subscription AND the applications decides to do so
      * in their implementation of Callback::OnResubscriptionNeeded().
-     *
      */
     void Close(CHIP_ERROR aError, bool allowResubscription = true);
 
@@ -516,6 +508,12 @@ private:
 
     ReadClient * mpNext                 = nullptr;
     InteractionModelEngine * mpImEngine = nullptr;
+
+    //
+    // This stores the params associated with the interaction in a specific set of cases:
+    //      1. Stores all parameters when used with subscriptions initiated using SendAutoResubscribeRequest.
+    //      2. Stores just the SessionHolder when used with any subscriptions.
+    //
     ReadPrepareParams mReadPrepareParams;
     uint32_t mNumRetries = 0;
 

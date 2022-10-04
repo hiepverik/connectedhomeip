@@ -14,6 +14,10 @@
 
 name: 24.1.4. [TC-CADMIN-1.4] Node Behavior using BCM [DUT - Commissionee]
 
+PICS:
+    - CADMIN.S
+    - CADMIN.S.F00
+
 config:
     nodeId: 0x12344321
     timeout: 300
@@ -29,6 +33,24 @@ config:
         defaultValue: "MT:-24J0AFN00KA0648G00"
 
 tests:
+    - label: "Precondition: Reset Devices to factory defaults"
+      PICS: PICS_SDK_CI_ONLY
+      cluster: "SystemCommands"
+      command: "FactoryReset"
+
+    - label: "Precondition: Reset Devices to factory defaults"
+      verification: |
+          Not implemented in YAML
+      cluster: "LogCommands"
+      command: "UserPrompt"
+      PICS: PICS_SKIP_SAMPLE_APP
+      arguments:
+          values:
+              - name: "message"
+                value: "Factory Reset the DUT and enter 'y' after success"
+              - name: "expectedValue"
+                value: "y"
+
     - label: "TH_CR1 starts a commissioning process with DUT_CE"
       cluster: "DelayCommands"
       command: "WaitForCommissionee"
@@ -49,6 +71,28 @@ tests:
                 value: 180
               - name: "discriminator"
                 value: discriminator
+
+    #Check for DNS-SD advertisement CM is not possible in YAML
+    - label: "Verify that the DNS-SD advertisement shows CM=1"
+      verification: |
+          On TH_CR1 send the below command
+
+          ubuntu@ubuntu:~/may16_cntrl/connectedhomeip/examples/chip-tool/out/debug$ avahi-browse -rt _matterc._udp
+          +   eth0 IPv6 B2822245F1F43570                              _matterc._udp        local
+          =   eth0 IPv6 B2822245F1F43570                              _matterc._udp        local
+            hostname = [E45F010F27530000.local]
+            address = [fe80::e65f:1ff:fe0f:2753]
+            port = [5540]
+            txt = ["PI=" "PH=36" "CM=1" "D=3840" "T=1" "SAI=300" "SII=5000" "VP=65521+32769"]
+      cluster: "LogCommands"
+      command: "UserPrompt"
+      PICS: PICS_SKIP_SAMPLE_APP
+      arguments:
+          values:
+              - name: "message"
+                value: "enter 'y' after success"
+              - name: "expectedValue"
+                value: "y"
 
     - label:
           "TH_CR1 writes the Basic Information Clusters NodeLabel mandatory
@@ -139,7 +183,7 @@ tests:
               maxLength: 32
 
     - label:
-          "TH_CR1 writes the Basic Information Clusters NodeLabel mandatory
+          "TH_CR2 writes the Basic Information Clusters NodeLabel mandatory
           attribute of DUT_CE"
       identity: "beta"
       command: "writeAttribute"
@@ -150,7 +194,7 @@ tests:
           value: "chiptest"
 
     - label:
-          "TH_CR1 reads the Basic Information Clusters NodeLabel mandatory
+          "TH_CR2 reads the Basic Information Clusters NodeLabel mandatory
           attribute of DUT_CE"
       identity: "beta"
       command: "readAttribute"

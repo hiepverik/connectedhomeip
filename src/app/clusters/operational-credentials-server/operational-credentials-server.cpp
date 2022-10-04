@@ -282,7 +282,6 @@ CHIP_ERROR DeleteFabricFromTable(FabricIndex fabricIndex)
 
 void CleanupSessionsForFabric(SessionManager & sessionMgr, FabricIndex fabricIndex)
 {
-    InteractionModelEngine::GetInstance()->CloseTransactionsFromFabricIndex(fabricIndex);
     sessionMgr.ExpireAllSessionsForFabric(fabricIndex);
 }
 
@@ -297,18 +296,6 @@ void FailSafeCleanup(const chip::DeviceLayer::ChipDeviceEvent * event)
     // Session Context at the Server.
     if (event->FailSafeTimerExpired.addNocCommandHasBeenInvoked || event->FailSafeTimerExpired.updateNocCommandHasBeenInvoked)
     {
-        // TODO(#19259): The following scope will no longer need to exist after #19259 is fixed
-        {
-            CASESessionManager * caseSessionManager = Server::GetInstance().GetCASESessionManager();
-            if (caseSessionManager)
-            {
-                const FabricInfo * fabricInfo = Server::GetInstance().GetFabricTable().FindFabricWithIndex(fabricIndex);
-                VerifyOrReturn(fabricInfo != nullptr);
-
-                caseSessionManager->ReleaseSessionsForFabric(fabricInfo->GetFabricIndex());
-            }
-        }
-
         SessionManager & sessionMgr = Server::GetInstance().GetSecureSessionManager();
         CleanupSessionsForFabric(sessionMgr, fabricIndex);
     }
@@ -341,9 +328,6 @@ void OnPlatformEventHandler(const chip::DeviceLayer::ChipDeviceEvent * event, in
 
 } // anonymous namespace
 
-// As per specifications section 11.22.5.1. Constant RESP_MAX
-constexpr size_t kMaxRspLen = 900;
-
 class OpCredsFabricTableDelegate : public chip::FabricTable::Delegate
 {
 public:
@@ -364,13 +348,13 @@ public:
             }
         }
 
-        // Try to send the queued events as soon as possible. If the just emitted leave event won't
+        // Try to send the queued events as soon as possible for this fabric. If the just emitted leave event won't
         // be sent this time, it will likely not be delivered at all for the following reasons:
         // - removing the fabric expires all associated ReadHandlers, so all subscriptions to
         //   the leave event will be cancelled.
         // - removing the fabric removes all associated access control entries, so generating
         //   subsequent reports containing the leave event will fail the access control check.
-        InteractionModelEngine::GetInstance()->GetReportingEngine().ScheduleUrgentEventDeliverySync();
+        InteractionModelEngine::GetInstance()->GetReportingEngine().ScheduleUrgentEventDeliverySync(MakeOptional(fabricIndex));
     }
 
     // Gets called when a fabric is deleted
@@ -379,6 +363,7 @@ public:
         ChipLogProgress(Zcl, "OpCreds: Fabric index 0x%x was removed", static_cast<unsigned>(fabricIndex));
 
         EventManagement::GetInstance().FabricRemoved(fabricIndex);
+
         NotifyFabricTableChanged();
     }
 
@@ -860,7 +845,7 @@ exit:
     else
     {
         commandObj->AddStatus(commandPath, nonDefaultStatus);
-        ChipLogError(Zcl, "OpCreds: Failed AddNOC request with IM error 0x%02x", to_underlying(nonDefaultStatus));
+        ChipLogError(Zcl, "OpCreds: Failed UpdateNOC request with IM error 0x%02x", to_underlying(nonDefaultStatus));
     }
 
     return true;
@@ -973,7 +958,7 @@ bool emberAfOperationalCredentialsClusterAttestationRequestCallback(app::Command
     attestationElementsSpan = MutableByteSpan{ attestationElements.Get(), attestationElementsLen };
     err = Credentials::ConstructAttestationElements(certDeclSpan, attestationNonce, timestamp, kEmptyFirmwareInfo,
                                                     emptyVendorReserved, attestationElementsSpan);
-    VerifyOrExit((err == CHIP_NO_ERROR) && (attestationElementsSpan.size() <= kMaxRspLen), finalStatus = Status::Failure);
+    VerifyOrExit(err == CHIP_NO_ERROR, finalStatus = Status::Failure);
 
     // Append attestation challenge in the back of the reserved space for the signature
     memcpy(attestationElements.Get() + attestationElementsSpan.size(), attestationChallenge.data(), attestationChallenge.size());
@@ -1104,7 +1089,7 @@ bool emberAfOperationalCredentialsClusterCSRRequestCallback(app::CommandHandler 
 
         err = Credentials::ConstructNOCSRElements(ByteSpan{ csrSpan.data(), csrSpan.size() }, CSRNonce, kNoVendorReserved,
                                                   kNoVendorReserved, kNoVendorReserved, nocsrElementsSpan);
-        VerifyOrExit((err == CHIP_NO_ERROR) && (nocsrElementsSpan.size() <= kMaxRspLen), finalStatus = Status::Failure);
+        VerifyOrExit(err == CHIP_NO_ERROR, finalStatus = Status::Failure);
 
         // Append attestation challenge in the back of the reserved space for the signature
         memcpy(nocsrElements.Get() + nocsrElementsSpan.size(), attestationChallenge.data(), attestationChallenge.size());

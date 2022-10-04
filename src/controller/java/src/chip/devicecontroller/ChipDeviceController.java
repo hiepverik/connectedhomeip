@@ -44,13 +44,15 @@ public class ChipDeviceController {
     return;
   }
 
-  /** Returns a new {@link ChipDeviceController} with default parameters. */
-  public ChipDeviceController() {
-    this(ControllerParams.newBuilder().build());
-  }
-
-  /** Returns a new {@link ChipDeviceController} with the specified parameters. */
+  /**
+   * Returns a new {@link ChipDeviceController} with the specified parameters. you must set a vendor
+   * ID, ControllerParams.newBuilder().setControllerVendorId(0xFFF4).build() 0xFFF4 is a test vendor
+   * ID
+   */
   public ChipDeviceController(ControllerParams params) {
+    if (params == null) {
+      throw new NullPointerException("params cannot be null");
+    }
     deviceControllerPtr = newDeviceController(params);
   }
 
@@ -63,9 +65,17 @@ public class ChipDeviceController {
   }
 
   /**
-   * Sets this DeviceController to use the given issuer for issuing operational certs. By default,
-   * the DeviceController uses an internal, OperationalCredentialsDelegate (see
-   * AndroidOperationalCredentialsIssuer)
+   * Sets this DeviceController to use the given issuer for issuing operational certs and verifying
+   * the DAC. By default, the DeviceController uses an internal, OperationalCredentialsDelegate (see
+   * AndroidOperationalCredentialsIssuer).
+   *
+   * <p>When a NOCChainIssuer is set for this controller, then onNOCChainGenerationNeeded will be
+   * called when the NOC CSR needs to be signed and DAC verified. This allows for custom credentials
+   * issuer and DAC verifier implementations, for example, when a proprietary cloud API will perform
+   * DAC verification and the CSR signing.
+   *
+   * <p>When a NOCChainIssuer is set for this controller, the PartialDACVerifier will be used rather
+   * than the DefaultDACVerifier.
    *
    * @param issuer
    */
@@ -188,14 +198,6 @@ public class ChipDeviceController {
     commissionDevice(deviceControllerPtr, deviceId, csrNonce, networkCredentials);
   }
 
-  public void pauseCommissioning() {
-    pauseCommissioning(deviceControllerPtr);
-  }
-
-  public void resumeCommissioning() {
-    resumeCommissioning(deviceControllerPtr);
-  }
-
   /**
    * When a NOCChainIssuer is set for this controller, then onNOCChainGenerationNeeded will be
    * called when the NOC CSR needs to be signed. This allows for custom credentials issuer
@@ -258,8 +260,8 @@ public class ChipDeviceController {
     getConnectedDevicePointer(deviceControllerPtr, nodeId, jniCallback.getCallbackHandle());
   }
 
-  public boolean disconnectDevice(long deviceId) {
-    return disconnectDevice(deviceControllerPtr, deviceId);
+  public void releaseConnectedDevicePointer(long devicePtr) {
+    releaseOperationalDevicePointer(devicePtr);
   }
 
   public void onConnectDeviceComplete() {
@@ -349,27 +351,9 @@ public class ChipDeviceController {
     completionListener.onError(error);
   }
 
-  public void onNOCChainGenerationNeeded(
-      byte[] csrElements,
-      byte[] csrNonce,
-      byte[] csrElementsSignature,
-      byte[] attestationChallenge,
-      byte[] attestationElements,
-      byte[] attestationNonce,
-      byte[] attestationElementsSignature,
-      byte[] dac,
-      byte[] pai) {
+  public void onNOCChainGenerationNeeded(CSRInfo csrInfo, AttestationInfo attestationInfo) {
     if (nocChainIssuer != null) {
-      nocChainIssuer.onNOCChainGenerationNeeded(
-          csrElements,
-          csrNonce,
-          csrElementsSignature,
-          attestationChallenge,
-          attestationElements,
-          attestationNonce,
-          attestationElementsSignature,
-          dac,
-          pai);
+      nocChainIssuer.onNOCChainGenerationNeeded(csrInfo, attestationInfo);
     }
   }
 
@@ -415,10 +399,6 @@ public class ChipDeviceController {
    * @see #convertX509CertToMatterCert(byte[])
    */
   public native long generateCompressedFabricId(byte[] rcac, byte[] noc);
-
-  public void updateDevice(long fabricId, long deviceId) {
-    updateDevice(deviceControllerPtr, fabricId, deviceId);
-  }
 
   /**
    * Get commmissionible Node. Commmissionible Node results are able to get using {@link
@@ -483,61 +463,62 @@ public class ChipDeviceController {
       int minInterval,
       int maxInterval) {
     ReportCallbackJni jniCallback =
-        new ReportCallbackJni(subscriptionEstablishedCallback, reportCallback);
-    subscribeToPath(
+        new ReportCallbackJni(subscriptionEstablishedCallback, reportCallback, null);
+    subscribe(
         deviceControllerPtr,
         jniCallback.getCallbackHandle(),
         devicePtr,
         attributePaths,
+        null,
         minInterval,
-        maxInterval);
+        maxInterval,
+        false,
+        false);
   }
 
-  /** Read the given attribute path. */
-  public void readPath(
-      ReportCallback callback, long devicePtr, List<ChipAttributePath> attributePaths) {
-    ReportCallbackJni jniCallback = new ReportCallbackJni(null, callback);
-    readPath(deviceControllerPtr, jniCallback.getCallbackHandle(), devicePtr, attributePaths);
-  }
-
-  /** Subscribe to the given event path. */
+  /** Subscribe to the given event path */
   public void subscribeToEventPath(
       SubscriptionEstablishedCallback subscriptionEstablishedCallback,
-      ResubscriptionAttemptCallback resubscriptionAttemptCallback,
-      ReportEventCallback reportCallback,
+      ReportCallback reportCallback,
       long devicePtr,
       List<ChipEventPath> eventPaths,
       int minInterval,
       int maxInterval) {
-    subscribeToEventPath(
-        subscriptionEstablishedCallback,
-        resubscriptionAttemptCallback,
-        reportCallback,
+    ReportCallbackJni jniCallback =
+        new ReportCallbackJni(subscriptionEstablishedCallback, reportCallback, null);
+    subscribe(
+        deviceControllerPtr,
+        jniCallback.getCallbackHandle(),
         devicePtr,
+        null,
         eventPaths,
         minInterval,
         maxInterval,
         false,
-        true);
+        false);
   }
 
-  public void subscribeToEventPath(
+  /** Subscribe to the given attribute/event path with keepSubscriptions and isFabricFiltered. */
+  public void subscribeToPath(
       SubscriptionEstablishedCallback subscriptionEstablishedCallback,
       ResubscriptionAttemptCallback resubscriptionAttemptCallback,
-      ReportEventCallback reportCallback,
+      ReportCallback reportCallback,
       long devicePtr,
+      List<ChipAttributePath> attributePaths,
       List<ChipEventPath> eventPaths,
       int minInterval,
       int maxInterval,
       boolean keepSubscriptions,
       boolean isFabricFiltered) {
-    ReportEventCallbackJni jniCallback =
-        new ReportEventCallbackJni(
-            subscriptionEstablishedCallback, reportCallback, resubscriptionAttemptCallback);
-    subscribeToEventPath(
+    // TODO: pass resubscriptionAttemptCallback to ReportCallbackJni since jni layer is not ready
+    // for auto-resubscribe
+    ReportCallbackJni jniCallback =
+        new ReportCallbackJni(subscriptionEstablishedCallback, reportCallback, null);
+    subscribe(
         deviceControllerPtr,
         jniCallback.getCallbackHandle(),
         devicePtr,
+        attributePaths,
         eventPaths,
         minInterval,
         maxInterval,
@@ -545,11 +526,41 @@ public class ChipDeviceController {
         isFabricFiltered);
   }
 
+  /** Read the given attribute path. */
+  public void readPath(
+      ReportCallback callback, long devicePtr, List<ChipAttributePath> attributePaths) {
+    ReportCallbackJni jniCallback = new ReportCallbackJni(null, callback, null);
+    read(
+        deviceControllerPtr,
+        jniCallback.getCallbackHandle(),
+        devicePtr,
+        attributePaths,
+        null,
+        true);
+  }
+
   /** Read the given event path. */
   public void readEventPath(
-      ReportEventCallback callback, long devicePtr, List<ChipEventPath> eventPaths) {
-    ReportEventCallbackJni jniCallback = new ReportEventCallbackJni(null, callback, null);
-    readEventPath(deviceControllerPtr, jniCallback.getCallbackHandle(), devicePtr, eventPaths);
+      ReportCallback callback, long devicePtr, List<ChipEventPath> eventPaths) {
+    ReportCallbackJni jniCallback = new ReportCallbackJni(null, callback, null);
+    read(deviceControllerPtr, jniCallback.getCallbackHandle(), devicePtr, null, eventPaths, true);
+  }
+
+  /** Read the given attribute/event path with isFabricFiltered flag. */
+  public void readPath(
+      ReportCallback callback,
+      long devicePtr,
+      List<ChipAttributePath> attributePaths,
+      List<ChipEventPath> eventPaths,
+      boolean isFabricFiltered) {
+    ReportCallbackJni jniCallback = new ReportCallbackJni(null, callback, null);
+    read(
+        deviceControllerPtr,
+        jniCallback.getCallbackHandle(),
+        devicePtr,
+        attributePaths,
+        eventPaths,
+        isFabricFiltered);
   }
 
   /**
@@ -580,35 +591,24 @@ public class ChipDeviceController {
   private native PaseVerifierParams computePaseVerifier(
       long deviceControllerPtr, long devicePtr, long setupPincode, long iterations, byte[] salt);
 
-  private native void subscribeToPath(
+  private native void subscribe(
       long deviceControllerPtr,
       long callbackHandle,
       long devicePtr,
       List<ChipAttributePath> attributePaths,
-      int minInterval,
-      int maxInterval);
-
-  public native void readPath(
-      long deviceControllerPtr,
-      long callbackHandle,
-      long devicePtr,
-      List<ChipAttributePath> attributePaths);
-
-  private native void subscribeToEventPath(
-      long deviceControllerPtr,
-      long callbackHandle,
-      long devicePtr,
       List<ChipEventPath> eventPaths,
       int minInterval,
       int maxInterval,
       boolean keepSubscriptions,
       boolean isFabricFiltered);
 
-  public native void readEventPath(
+  private native void read(
       long deviceControllerPtr,
       long callbackHandle,
       long devicePtr,
-      List<ChipEventPath> eventPaths);
+      List<ChipAttributePath> attributePaths,
+      List<ChipEventPath> eventPaths,
+      boolean isFabricFiltered);
 
   private native long newDeviceController(ControllerParams params);
 
@@ -648,9 +648,7 @@ public class ChipDeviceController {
   private native void getConnectedDevicePointer(
       long deviceControllerPtr, long deviceId, long callbackHandle);
 
-  private native void releaseConnectedDevicePointer(long devicePtr);
-
-  private native boolean disconnectDevice(long deviceControllerPtr, long deviceId);
+  private native void releaseOperationalDevicePointer(long devicePtr);
 
   private native void deleteDeviceController(long deviceControllerPtr);
 
@@ -659,8 +657,6 @@ public class ChipDeviceController {
   private native NetworkLocation getNetworkLocation(long deviceControllerPtr, long deviceId);
 
   private native long getCompressedFabricId(long deviceControllerPtr);
-
-  private native void updateDevice(long deviceControllerPtr, long fabricId, long deviceId);
 
   private native void discoverCommissionableNodes(long deviceControllerPtr);
 
@@ -689,10 +685,6 @@ public class ChipDeviceController {
       OpenCommissioningCallback callback);
 
   private native byte[] getAttestationChallenge(long deviceControllerPtr, long devicePtr);
-
-  private native void pauseCommissioning(long deviceControllerPtr);
-
-  private native void resumeCommissioning(long deviceControllerPtr);
 
   private native void setUseJavaCallbackForNOCRequest(
       long deviceControllerPtr, boolean useCallback);
@@ -724,8 +716,12 @@ public class ChipDeviceController {
   public interface NOCChainIssuer {
     /**
      * When a NOCChainIssuer is set for this controller, then onNOCChainGenerationNeeded will be
-     * called when the NOC CSR needs to be signed. This allows for custom credentials issuer
-     * implementations, for example, when a proprietary cloud API will perform the CSR signing.
+     * called when the DAC chain must be verified and NOC chain needs to be issued from a CSR. This
+     * allows for custom credentials issuer and DAC verifier implementations, for example, when a
+     * proprietary cloud API will perform DAC verification and the NOC chain issuance from CSR.
+     *
+     * <p>When a NOCChainIssuer is set for this controller, the PartialDACVerifier will be used
+     * rather than the DefaultDACVerifier.
      *
      * <p>The commissioning workflow will stop upon the onNOCChainGenerationNeeded callback and
      * resume once onNOCChainGeneration is called.
@@ -739,16 +735,7 @@ public class ChipDeviceController {
      *
      * <p>All csr and attestation fields are provided to allow for custom attestestation checks.
      */
-    void onNOCChainGenerationNeeded(
-        byte[] csrElements,
-        byte[] csrNonce,
-        byte[] csrElementsSignature,
-        byte[] attestationChallenge,
-        byte[] attestationElements,
-        byte[] attestationNonce,
-        byte[] attestationElementsSignature,
-        byte[] dac,
-        byte[] pai);
+    void onNOCChainGenerationNeeded(CSRInfo csrInfo, AttestationInfo attestationInfo);
   }
 
   /**
@@ -757,6 +744,11 @@ public class ChipDeviceController {
    * <p>Set the AttemptNetworkScanWiFi or AttemptNetworkScanThread to configure the enable/disable
    * WiFi or Thread network scan during commissioning in the the default CommissioningDelegate used
    * by the ChipDeviceCommissioner.
+   *
+   * <p>When the callbacks onScanNetworksFailure or onScanNetworksSuccess are invoked, the
+   * commissioning flow has reached the kNeedsNetworkCreds and will wait to advance until this
+   * device controller's updateCommissioningNetworkCredentials method is called with the desired
+   * network credentials set.
    */
   public interface ScanNetworksListener {
     /** Notifies when scan networks call fails. */

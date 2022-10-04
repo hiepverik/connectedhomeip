@@ -26,6 +26,106 @@ config:
     endpoint: 0
 
 tests:
+    - label: "Preconditions"
+      verification: |
+          ./chip-tool groupkeymanagement read max-groups-per-fabric 1 0
+
+          Verify the "MaxGroupsPerFabric value" on the TH(Chip-tool)  Log:
+
+          [1658322885.576847][4918:4923] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0002 DataVersion: 3844079670
+          [1658322885.576907][4918:4923] CHIP:TOO:   MaxGroupsPerFabric: 3
+      disabled: true
+
+    - label: "Preconditions"
+      verification: |
+          Execute the following command in TH to generate the pre-condition to execute this test case:
+
+          ./chip-tool groupkeymanagement key-set-write "{"groupKeySetID": 1,
+          "groupKeySecurityPolicy": 0, "epochKey0":
+          "d0d1d2d3d4d5d6d7d8d9dadbdcdddedf", "epochStartTime0": 2220000,"epochKey1":
+          "d1d1d2d3d4d5d6d7d8d9dadbdcdddedf", "epochStartTime1": 2220001,"epochKey2":
+          "d2d1d2d3d4d5d6d7d8d9dadbdcdddedf", "epochStartTime2": 2220002 }" 1 0
+
+          Verify the "status is success" on the TH(Chip-tool)  Log:
+
+          [1658316948.574526][4039:4044] CHIP:DMG:                                StatusIB =
+          [1658316948.574561][4039:4044] CHIP:DMG:                                {
+          [1658316948.574597][4039:4044] CHIP:DMG:                                   status = 0x00 (SUCCESS),
+          [1658316948.574632][4039:4044] CHIP:DMG:                                },
+
+          Before adding the Groups (0x0001,0x0002,0x0003) execute this command
+
+          ./chip-tool groupkeymanagement write group-key-map "[{"groupId": 1, "groupKeySetID": 1, "fabricIndex": 1},{"groupId":2, "groupKeySetID": 1, "fabricIndex": 1},{"groupId": 3, "groupKeySetID": 1,"fabricIndex": 1} ]" 1 0
+
+          Verify the "status is success" on the TH(Chip-tool)  Log:
+
+          [1662654848.010405][228914:228919] CHIP:DMG:                 AttributeStatusIB =
+          [1662654848.010410][228914:228919] CHIP:DMG:                 {
+          [1662654848.010416][228914:228919] CHIP:DMG:                         AttributePathIB =
+          [1662654848.010421][228914:228919] CHIP:DMG:                         {
+          [1662654848.010427][228914:228919] CHIP:DMG:                                 Endpoint = 0x0,
+          [1662654848.010433][228914:228919] CHIP:DMG:                                 Cluster = 0x3f,
+          [1662654848.010439][228914:228919] CHIP:DMG:                                 Attribute = 0x0000_0000,
+          [1662654848.010444][228914:228919] CHIP:DMG:                                 ListIndex = Null,
+          [1662654848.010450][228914:228919] CHIP:DMG:                         }
+          [1662654848.010458][228914:228919] CHIP:DMG:
+          [1662654848.010464][228914:228919] CHIP:DMG:                         StatusIB =
+          [1662654848.010469][228914:228919] CHIP:DMG:                         {
+          [1662654848.010475][228914:228919] CHIP:DMG:                                 status = 0x00 (SUCCESS),
+          [1662654848.010480][228914:228919] CHIP:DMG:                         },
+          [1662654848.010485][228914:228919] CHIP:DMG:
+          [1662654848.010490][228914:228919] CHIP:DMG:                 },
+          [1662654848.010501][228914:228919] CHIP:DMG:
+          [1662654848.010505][228914:228919] CHIP:DMG:                 AttributeStatusIB =
+          [1662654848.010510][228914:228919] CHIP:DMG:                 {
+          [1662654848.010514][228914:228919] CHIP:DMG:                         AttributePathIB =
+          [1662654848.010519][228914:228919] CHIP:DMG:                         {
+          [1662654848.010523][228914:228919] CHIP:DMG:                                 Endpoint = 0x0,
+          [1662654848.010527][228914:228919] CHIP:DMG:                                 Cluster = 0x3f,
+          [1662654848.010531][228914:228919] CHIP:DMG:                                 Attribute = 0x0000_0000,
+          [1662654848.010535][228914:228919] CHIP:DMG:                                 ListIndex = Null,
+          [1662654848.010538][228914:228919] CHIP:DMG:                         }
+          [1662654848.010543][228914:228919] CHIP:DMG:
+          [1662654848.010547][228914:228919] CHIP:DMG:                         StatusIB =
+          [1662654848.010550][228914:228919] CHIP:DMG:                         {
+          [1662654848.010554][228914:228919] CHIP:DMG:                                 status = 0x00 (SUCCESS),
+          [1662654848.010557][228914:228919] CHIP:DMG:                         },
+          [1662654848.010561][228914:228919] CHIP:DMG:
+          [1662654848.010565][228914:228919] CHIP:DMG:                 },
+          [1662654848.010571][228914:228919] CHIP:DMG:
+          [1662654848.010574][228914:228919] CHIP:DMG:                 AttributeStatusIB =
+          [1662654848.010578][228914:228919] CHIP:DMG:                 {
+          [1662654848.010581][228914:228919] CHIP:DMG:                         AttributePathIB =
+          [1662654848.010585][228914:228919] CHIP:DMG:                         {
+          [1662654848.010589][228914:228919] CHIP:DMG:                                 Endpoint = 0x0,
+          [1662654848.010593][228914:228919] CHIP:DMG:                                 Cluster = 0x3f,
+          [1662654848.010597][228914:228919] CHIP:DMG:                                 Attribute = 0x0000_0000,
+          [1662654848.010601][228914:228919] CHIP:DMG:                                 ListIndex = Null,
+          [1662654848.010605][228914:228919] CHIP:DMG:                         }
+          [1662654848.010610][228914:228919] CHIP:DMG:
+          [1662654848.010614][228914:228919] CHIP:DMG:                         StatusIB =
+          [1662654848.010618][228914:228919] CHIP:DMG:                         {
+          [1662654848.010621][228914:228919] CHIP:DMG:                                 status = 0x00 (SUCCESS),
+          [1662654848.010625][228914:228919] CHIP:DMG:                         },
+
+
+          After executing all commands related to the above three groups, execute the below command before adding the Group 0x0004 to check the Resource_Exhausted Condition
+
+
+          ./chip-tool groupkeymanagement write group-key-map "[{"groupId": 4, "groupKeySetID": 1, "fabricIndex": 1}]" 1 0
+
+          Verify the "status is success" on the TH(Chip-tool)  Log:
+
+          [1658323590.007082][4982:4987] CHIP:DMG:                        StatusIB =
+          [1658323590.007117][4982:4987] CHIP:DMG:                        {
+          [1658323590.007156][4982:4987] CHIP:DMG:                                status = 0x00 (SUCCESS),
+          [1658323590.007196][4982:4987] CHIP:DMG:                        },
+          [1658323590.006453][4982:4987] CHIP:DMG:                        StatusIB =
+          [1658323590.006489][4982:4987] CHIP:DMG:                        {
+          [1658323590.006527][4982:4987] CHIP:DMG:                                status = 0x00 (SUCCESS),
+          [1658323590.006562][4982:4987] CHIP:DMG:                        },
+      disabled: true
+
     - label:
           "If maxgroups>0, TH sends AddGroup command to DUT as unicast with the
           following fields : GroupID as 0x0001 GroupName as Gp1"
@@ -33,7 +133,7 @@ tests:
       verification: |
           ./chip-tool groups add-group 0x0001 grp1 1 1
 
-          Verify the status is success on the TH Log:
+          Verify the "status is success" on the TH(Chip-tool)  Log:
 
           [1651218084.427102][2526:2531] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0000
           [1651218084.427203][2526:2531] CHIP:TOO:   AddGroupResponse: {
@@ -49,7 +149,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1651218198.062850][2538:2543] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 2261933069
           [1651218198.062980][2538:2543] CHIP:TOO:   GroupTable: 1 entries
@@ -69,7 +169,7 @@ tests:
       verification: |
           ./chip-tool groups add-group 0x0002 grp2 1 1
 
-          Verify the status is success on the TH Log:
+          Verify the "status is success" on the TH(Chip-tool)  Log:
 
           [1653484028.897698][11275:11280] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0000
           [1653484028.897804][11275:11280] CHIP:TOO:   AddGroupResponse: {
@@ -85,7 +185,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1653484065.934504][11281:11286] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 1368205390
           [1653484065.934631][11281:11286] CHIP:TOO:   GroupTable: 2 entries
@@ -112,7 +212,7 @@ tests:
       verification: |
           ./chip-tool groups add-group 0x0003 grp3 1 1
 
-          Verify the status is success on the TH Log:
+          Verify the "status is success" on the TH(Chip-tool)  Log:
 
           [1653484116.857523][11289:11294] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0000
           [1653484116.857675][11289:11294] CHIP:TOO:   AddGroupResponse: {
@@ -128,7 +228,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1653484156.968253][11299:11304] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 1368205390
           [1653484156.968414][11299:11304] CHIP:TOO:   GroupTable: 3 entries
@@ -162,7 +262,7 @@ tests:
       verification: |
           ./chip-tool groups add-group 0x0004 grp4 1 1
 
-          Verify the status is RESOURCE_EXHAUSTED on the TH Log:
+          Verify the "status is RESOURCE_EXHAUSTED" on the TH(Chip-tool)  Log:
 
           [1653484187.170553][11306:11311] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0000
           [1653484187.170637][11306:11311] CHIP:TOO:   AddGroupResponse: {
@@ -178,7 +278,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1653484324.735216][11318:11323] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 1368205390
           [1653484324.735368][11318:11323] CHIP:TOO:   GroupTable: 3 entries
@@ -212,7 +312,7 @@ tests:
       verification: |
           ./chip-tool groups add-group 0x0000 grp6 1 1
 
-          Verify the status is CONSTRAINT_ERROR on the TH Log:
+          Verify the "status is CONSTRAINT_ERROR" on the TH(Chip-tool)  Log:
 
           [1653484439.884144][11341:11346] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0000
           [1653484439.884258][11341:11346] CHIP:TOO:   AddGroupResponse: {
@@ -228,7 +328,7 @@ tests:
       verification: |
           ./chip-tool groups add-group 0x0005 grp5 1 1
 
-          Verify the status is UNSUPPORTED_ACCESS on the TH Log:
+          Verify the "status is UNSUPPORTED_ACCESS" on the TH(Chip-tool)  Log:
 
           [1658302176.951047][2747:2752] CHIP:TOO: Endpoint: 1 Cluster: 0x0000_0004 Command 0x0000_0000
           [1658302176.951103][2747:2752] CHIP:TOO:   AddGroupResponse: {
@@ -244,7 +344,7 @@ tests:
       verification: |
           ./chip-tool groups view-group 0x0001 1 1
 
-          Verify the status is success on the TH Log:
+          Verify the "status is success" on the TH(Chip-tool)  Log:
 
           1653484504.667714][11349:11354] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0001
           [1653484504.667841][11349:11354] CHIP:TOO: ViewGroupResponse: {
@@ -261,7 +361,7 @@ tests:
       verification: |
           ./chip-tool groups view-group 0x0000 1 1
 
-          Verify the status is CONSTRAINT_ERROR on the TH Log:
+          Verify the "status is CONSTRAINT_ERROR" on the TH(Chip-tool)  Log:
 
           [1653484611.595344][11412:11417] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0001
           [1653484611.595454][11412:11417] CHIP:TOO:   ViewGroupResponse: {
@@ -278,7 +378,7 @@ tests:
       verification: |
           ./chip-tool groups remove-group 0x0001 1 1
 
-          Verify the status is success on the TH Log:
+          Verify the "status is success" on the TH(Chip-tool)  Log:
 
           [1653484876.432744][11451:11456] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0003
           [1653484876.432915][11451:11456] CHIP:TOO:   RemoveGroupResponse: {
@@ -294,7 +394,7 @@ tests:
       verification: |
           ./chip-tool groups view-group 0x0001 1 1
 
-          Verify the status is NOT_FOUND on the TH Log:
+          Verify the "status is NOT_FOUND" on the TH(Chip-tool)  Log:
 
           [1653484952.142387][11458:11463] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0001
           [1653484952.142476][11458:11463] CHIP:TOO:   ViewGroupResponse: {
@@ -309,7 +409,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1655125356.123370][27657:27662] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 1860794324
           [1655125356.123494][27657:27662] CHIP:TOO:   GroupTable: 2 entries
@@ -336,7 +436,7 @@ tests:
       verification: |
           ./chip-tool groups remove-group 0x0000 1 1
 
-          Verify the status as CONSTRAINT_ERROR on the TH Log:
+          Verify the "status as CONSTRAINT_ERROR" on the TH(Chip-tool)  Log:
 
           [1653485045.328766][11473:11478] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0003
           [1653485045.328896][11473:11478] CHIP:TOO:   RemoveGroupResponse: {
@@ -352,7 +452,7 @@ tests:
       verification: |
           ./chip-tool groups remove-group 0x0001 1 1
 
-          Verify the status is NOT_FOUND  on the TH Log:
+          Verify the "status is NOT_FOUND"  on the TH(Chip-tool)  Log:
 
           [1653485126.672869][11483:11488] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0003
           [1653485126.672969][11483:11488] CHIP:TOO:   RemoveGroupResponse: {
@@ -366,7 +466,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1655125356.123370][27657:27662] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 1860794324
           [1655125356.123494][27657:27662] CHIP:TOO:   GroupTable: 2 entries
@@ -391,7 +491,7 @@ tests:
       verification: |
           ./chip-tool groups remove-all-groups 1 1
 
-          Verify the status is success on the TH Log:
+          Verify the "status is success" on the TH(Chip-tool)  Log:
 
           [1653485455.344097][11508:11513] CHIP:DMG:                              StatusIB =
           [1653485455.344141][11508:11513] CHIP:DMG:                              {
@@ -406,7 +506,7 @@ tests:
       verification: |
           ./chip-tool groups view-group 0x0001 1 1
 
-          Verify the status is NOT_FOUND on the TH Log:
+          Verify the "status is NOT_FOUND" on the TH(Chip-tool)  Log:
 
           [1653559917.259920][3227:3232] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_0004 Command 0x0000_0001
           [1653559917.259993][3227:3232] CHIP:TOO:   ViewGroupResponse: {
@@ -421,7 +521,7 @@ tests:
       verification: |
           ./chip-tool groupkeymanagement read group-table 1 0
 
-          Verify the grouptable entries on the TH Log:
+          Verify the "grouptable entries" on the TH(Chip-tool)  Log:
 
           [1656332191.739327][27032:27037] CHIP:TOO: Endpoint: 0 Cluster: 0x0000_003F Attribute 0x0000_0001 DataVersion: 3761602970
           [1656332191.739391][27032:27037] CHIP:TOO:   GroupTable: 0 entries
