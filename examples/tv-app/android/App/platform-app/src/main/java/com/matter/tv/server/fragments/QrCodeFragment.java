@@ -66,7 +66,7 @@ public class QrCodeFragment extends Fragment {
       String qrCode = parser.getQrCodeFromPayload(payload);
       mQrCodeTxt.setText(qrCode);
 
-      Bitmap qrCodeBitmap = QRUtils.createQRCodeBitmap(qrCode, 800, 800);
+      Bitmap qrCodeBitmap = QRUtils.createQRCodeBitmap(qrCode, 200, 200);
       mQrCodeImg.setImageBitmap(qrCodeBitmap);
     } catch (SetupPayloadParser.SetupPayloadException e) {
       e.printStackTrace();
